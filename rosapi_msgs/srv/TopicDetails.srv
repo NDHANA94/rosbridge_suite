@@ -2,4 +2,4 @@ string topic
 ---
 string type
 string typedef_full_text
-TypeDef typdef
+TypeDef typedefs
