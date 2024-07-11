@@ -31,6 +31,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   srv/TopicsAndRawTypes.srv
   srv/TopicsForType.srv
   srv/TopicType.srv
+  srv/TopicDetails.srv
   DEPENDENCIES builtin_interfaces
 )
 
