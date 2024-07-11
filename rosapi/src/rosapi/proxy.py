@@ -31,10 +31,15 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
+import os
+
 from ros2node.api import (
     get_node_names,
     get_publisher_info,
     get_service_server_info,
+    get_service_client_info,
+    get_action_server_info,
+    get_action_client_info,
     get_subscriber_info,
 )
 from ros2service.api import get_service_names, get_service_names_and_types
@@ -130,27 +135,50 @@ def get_node_info(node_name, include_hidden=False):
         # Only the name of each item is required as output.
         subscribers = get_node_subscriptions(node_name)
         publishers = get_node_publications(node_name)
-        services = get_node_services(node_name)
+        service_servers = get_node_service_servers(node_name)
+        service_clients = get_node_service_clients(node_name)
 
-        return subscribers, publishers, services
+        if str(os.environ["ROS_DISTRO"]) in ['foxy', 'dashing', 'eloquent']:
+            action_servers = []
+            action_clients = []
+        else:
+            action_servers = get_node_action_servers(node_name)
+            action_clients = get_node_action_clients(node_name)
+
+        return subscribers, publishers, service_servers, service_clients, action_servers, action_clients
 
 
 def get_node_publications(node_name):
-    """Returns a list of topic names that are being published by the specified node"""
+    """Returns a list of topic name:type that are being published by the specified node"""
     publishers = get_publisher_info(node=_node, remote_node_name=node_name)
-    return [publisher.name for publisher in publishers]
+    return [publisher.name + ":" + publisher.types[0] for publisher in publishers]
 
 
 def get_node_subscriptions(node_name):
-    """Returns a list of topic names that are being subscribed by the specified node"""
+    """Returns a list of topic name:type that are being subscribed by the specified node"""
     subscribers = get_subscriber_info(node=_node, remote_node_name=node_name)
-    return [subscriber.name for subscriber in subscribers]
+    return [subscriber.name + ":" + subscriber.types[0] for subscriber in subscribers]
 
 
-def get_node_services(node_name):
-    """Returns a list of service names that are being hosted by the specified node"""
+def get_node_service_servers(node_name):
+    """Returns a list of service servers name:type that are being hosted by the specified node"""
     services = get_service_server_info(node=_node, remote_node_name=node_name)
-    return [service.name for service in services]
+    return [service.name + ":" + service.types[0] for service in services]
+
+def get_node_service_clients(node_name):
+    """Returns a list of service clients name:type that are used by the specified node"""
+    service_clients = get_service_client_info(node=_node, remote_node_name=node_name)
+    return [service.name + ":" + service.types[0] for service in service_clients]
+
+def get_node_action_servers(node_name):
+    """Returns a list of action servers name:type that are being hosted by the specified node"""
+    action_servers = get_action_server_info(node=_node, remote_node_name=node_name)
+    return [action.name + ":" + action.types[0] for action in action_servers]
+
+def get_node_action_clients(node_name):
+    """Returns a list of action clients name:type that are used by the specified node"""
+    action_clients = get_action_client_info(node=_node, remote_node_name=node_name)
+    return [action.name + ":" + action.types[0] for action in action_clients]
 
 
 def get_node_service_types(node_name):

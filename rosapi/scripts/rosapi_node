@@ -139,7 +139,6 @@ class Rosapi(Node):
         response.topics, response.types = proxy.get_topics_and_types(self.globs.topics)
         return response
     
-    # //////
     def get_topic_details(self, request, response):
         """Called by the rosapi/TopicDetails service. Returns type, typedef, typedef_full_text"""
         response.type = proxy.get_topic_type(request.topic, self.globs.topics)
@@ -179,9 +178,12 @@ class Rosapi(Node):
     def get_node_details(self, request, response):
         """Called by the rosapi/Nodes service. Returns a node description"""
         (
-            response.subscribing,
-            response.publishing,
-            response.services,
+            response.subscribers,
+            response.publishers,
+            response.service_servers,
+            response.service_clients,
+            response.action_servers,
+            response.action_clients
         ) = proxy.get_node_info(request.node)
         return response
 
