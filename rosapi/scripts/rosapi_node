@@ -65,6 +65,7 @@ from rosapi_msgs.srv import (
     TopicsAndRawTypes,
     TopicsForType,
     TopicType,
+    TopicDetails
 )
 
 
@@ -89,6 +90,7 @@ class Rosapi(Node):
             full_name = self.get_namespace() + "/" + self.get_name()
         params.init(full_name)
         self.create_service(Topics, "/rosapi/topics", self.get_topics)
+        self.create_service(TopicDetails, "/rosapi/topic_details", self.get_topic_details)
         self.create_service(TopicsForType, "/rosapi/topics_for_type", self.get_topics_for_type)
         self.create_service(
             TopicsAndRawTypes,
@@ -135,6 +137,14 @@ class Rosapi(Node):
     def get_topics(self, request, response):
         """Called by the rosapi/Topics service. Returns a list of all the topics being published."""
         response.topics, response.types = proxy.get_topics_and_types(self.globs.topics)
+        return response
+    
+    # //////
+    def get_topic_details(self, request, response):
+        """Called by the rosapi/TopicDetails service. Returns type, typedef, typedef_full_text"""
+        response.type = proxy.get_topic_type(request.topic, self.globs.topics)
+        response.typedefs = [ dict_to_typedef(d) for d in objectutils.get_typedef_recursive(response.type)]
+        response.typedef_full_text = objectutils.get_typedef_full_text(response.type)
         return response
 
     def get_topics_for_type(self, request, response):
