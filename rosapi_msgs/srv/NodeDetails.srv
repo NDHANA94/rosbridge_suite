@@ -1,5 +1,8 @@
 string node
 ---
-string[] subscribing
-string[] publishing
-string[] services
+string[] subscribers
+string[] publishers
+string[] service_servers
+string[] service_clients
+string[] action_servers
+string[] action_clients
