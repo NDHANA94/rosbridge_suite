@@ -140,7 +140,9 @@ class Rosapi(Node):
         return response
     
     def get_topic_details(self, request, response):
-        """Called by the rosapi/TopicDetails service. Returns type, typedef, typedef_full_text"""
+        """Called by the rosapi/TopicDetails service. Returns type, publishers, subscribers, typedef, typedef_full_text"""
+        response.publishers = proxy.get_publishers(request.topic, self.globs.topics)
+        response.subscribers = proxy.get_subscribers(request.topic, self.globs.topics)
         response.type = proxy.get_topic_type(request.topic, self.globs.topics)
         response.typedefs = [ dict_to_typedef(d) for d in objectutils.get_typedef_recursive(response.type)]
         response.typedef_full_text = objectutils.get_typedef_full_text(response.type)

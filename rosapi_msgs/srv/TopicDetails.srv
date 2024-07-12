@@ -1,5 +1,7 @@
 string topic
 ---
 string type
+string[] publishers
+string[] subscribers
 string typedef_full_text
 TypeDef[] typedefs
