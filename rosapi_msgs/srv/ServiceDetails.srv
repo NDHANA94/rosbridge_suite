@@ -1,0 +1,8 @@
+string service
+---
+string type
+string node
+string[] providers
+string typedef_full_text
+TypeDef[] response_typedefs
+TypeDef[] request_typedefs

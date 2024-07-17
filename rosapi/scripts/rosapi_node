@@ -57,6 +57,7 @@ from rosapi_msgs.srv import (
     ServiceRequestDetails,
     ServiceResponseDetails,
     Services,
+    ServiceDetails,
     ServicesForType,
     ServiceType,
     SetParam,
@@ -89,50 +90,83 @@ class Rosapi(Node):
         else:
             full_name = self.get_namespace() + "/" + self.get_name()
         params.init(full_name)
-        self.create_service(Topics, "/rosapi/topics", self.get_topics)
-        self.create_service(TopicDetails, "/rosapi/topic_details", self.get_topic_details)
-        self.create_service(TopicsForType, "/rosapi/topics_for_type", self.get_topics_for_type)
-        self.create_service(
-            TopicsAndRawTypes,
-            "/rosapi/topics_and_raw_types",
-            self.get_topics_and_raw_types,
-        )
-        self.create_service(Services, "/rosapi/services", self.get_services)
-        self.create_service(
-            ServicesForType, "/rosapi/services_for_type", self.get_services_for_type
-        )
+
+        # --- nodes ----
         self.create_service(Nodes, "/rosapi/nodes", self.get_nodes)
         self.create_service(NodeDetails, "/rosapi/node_details", self.get_node_details)
-        self.create_service(GetActionServers, "/rosapi/action_servers", self.get_action_servers)
-        self.create_service(TopicType, "/rosapi/topic_type", self.get_topic_type)
-        self.create_service(ServiceType, "/rosapi/service_type", self.get_service_type)
         self.create_service(Publishers, "/rosapi/publishers", self.get_publishers)
         self.create_service(Subscribers, "/rosapi/subscribers", self.get_subscribers)
-        self.create_service(
-            ServiceProviders, "/rosapi/service_providers", self.get_service_providers
-        )
+
+        # --- topics ---
+        self.create_service(Topics, "/rosapi/topics", self.get_topics)
+        self.create_service(TopicType, "/rosapi/topic_type", self.get_topic_type)
+        self.create_service(TopicDetails, "/rosapi/topic_details", self.get_topic_details)
+        self.create_service(TopicsForType, "/rosapi/topics_for_type", self.get_topics_for_type)
+        self.create_service(TopicsAndRawTypes, "/rosapi/topics_and_raw_types", self.get_topics_and_raw_types)
+
+        # --- services ---
+        self.create_service(Services, "/rosapi/services", self.get_services)
+        self.create_service(ServicesForType, "/rosapi/services_for_type", self.get_services_for_type)
+        self.create_service(ServiceType, "/rosapi/service_type", self.get_service_type)
+        self.create_service(ServiceProviders, "/rosapi/service_providers", self.get_service_providers)
         self.create_service(ServiceNode, "/rosapi/service_node", self.get_service_node)
-        self.create_service(MessageDetails, "/rosapi/message_details", self.get_message_details)
-        self.create_service(
-            ServiceRequestDetails,
-            "/rosapi/service_request_details",
-            self.get_service_request_details,
-        )
-        self.create_service(
-            ServiceResponseDetails,
-            "/rosapi/service_response_details",
-            self.get_service_response_details,
-        )
+        self.create_service(ServiceRequestDetails, "/rosapi/service_request_details", self.get_service_request_details)
+        self.create_service(ServiceResponseDetails, "/rosapi/service_response_details", self.get_service_response_details)
+        self.create_service(ServiceDetails, "/rosapi/service_details", self.get_service_details)
+
+        # --- actions ---
+        self.create_service(GetActionServers, "/rosapi/action_servers", self.get_action_servers)
+
+        # --- params ---
         self.create_service(SetParam, "/rosapi/set_param", self.set_param)
         self.create_service(GetParam, "/rosapi/get_param", self.get_param)
         self.create_service(HasParam, "/rosapi/has_param", self.has_param)
         self.create_service(DeleteParam, "/rosapi/delete_param", self.delete_param)
         self.create_service(GetParamNames, "/rosapi/get_param_names", self.get_param_names)
-        self.create_service(GetTime, "/rosapi/get_time", self.get_time)
+
+        # --- other ---
         self.create_service(GetROSVersion, "/rosapi/get_ros_version", self.get_ros_version)
+        self.create_service(MessageDetails, "/rosapi/message_details", self.get_message_details)
+
+        self.create_service(GetTime, "/rosapi/get_time", self.get_time)
+        
+
 
     def get_globs(self):
         return glob_helper.get_globs(self)
+
+    # NODES ---------------------------------------------------------
+
+    def get_nodes(self, request, response):
+        """Called by the rosapi/Nodes service. Returns a list of all the nodes that are registered"""
+        response.nodes = proxy.get_nodes()
+        return response
+
+    def get_node_details(self, request, response):
+        """Called by the rosapi/Nodes service. Returns a node description"""
+        (
+            response.subscribers,
+            response.publishers,
+            response.service_servers,
+            response.service_clients,
+            response.action_servers,
+            response.action_clients
+        ) = proxy.get_node_info(request.node)
+        return response
+    
+    def get_publishers(self, request, response):
+        """Called by the rosapi/Publishers service.  Given the name of a topic, returns a list of node names
+        that are publishing on that topic."""
+        response.publishers = proxy.get_publishers(request.topic, self.globs.topics)
+        return response
+
+    def get_subscribers(self, request, response):
+        """Called by the rosapi/Subscribers service.  Given the name of a topic, returns a list of node names
+        that are subscribing to that topic."""
+        response.subscribers = proxy.get_subscribers(request.topic, self.globs.topics)
+        return response
+
+    # TOPICS ---------------------------------------------------------
 
     def get_topics(self, request, response):
         """Called by the rosapi/Topics service. Returns a list of all the topics being published."""
@@ -161,6 +195,17 @@ class Rosapi(Node):
             objectutils.get_typedef_full_text(type) for type in response.types
         ]
         return response
+    
+    def get_topic_type(self, request, response):
+        """Called by the rosapi/TopicType service.  Given the name of a topic, returns the name of the type of that topic.
+        Request class has one field, 'topic', which is a string value (the name of the topic)
+        Response class has one field, 'type', which is a string value (the type of the topic)
+        If the topic does not exist, an empty string is returned."""
+        response.type = proxy.get_topic_type(request.topic, self.globs.topics)
+        return response
+
+
+    # SERVICES ---------------------------------------------------------
 
     def get_services(self, request, response):
         """Called by the rosapi/Services service. Returns a list of all the services being advertised."""
@@ -172,37 +217,6 @@ class Rosapi(Node):
         response.services = proxy.get_services_for_type(request.type, self.globs.services)
         return response
 
-    def get_nodes(self, request, response):
-        """Called by the rosapi/Nodes service. Returns a list of all the nodes that are registered"""
-        response.nodes = proxy.get_nodes()
-        return response
-
-    def get_node_details(self, request, response):
-        """Called by the rosapi/Nodes service. Returns a node description"""
-        (
-            response.subscribers,
-            response.publishers,
-            response.service_servers,
-            response.service_clients,
-            response.action_servers,
-            response.action_clients
-        ) = proxy.get_node_info(request.node)
-        return response
-
-    def get_action_servers(self, request, response):
-        """Called by the rosapi/GetActionServers service. Returns a list of action servers based on actions standard topics"""
-        topics = proxy.get_topics(self.globs.topics, include_hidden=True)
-        response.action_servers = proxy.filter_action_servers(topics)
-        return response
-
-    def get_topic_type(self, request, response):
-        """Called by the rosapi/TopicType service.  Given the name of a topic, returns the name of the type of that topic.
-        Request class has one field, 'topic', which is a string value (the name of the topic)
-        Response class has one field, 'type', which is a string value (the type of the topic)
-        If the topic does not exist, an empty string is returned."""
-        response.type = proxy.get_topic_type(request.topic, self.globs.topics)
-        return response
-
     def get_service_type(self, request, response):
         """Called by the rosapi/ServiceType service.  Given the name of a service, returns the type of that service
         Request class has one field, 'service', which is a string value (the name of the service)
@@ -211,20 +225,8 @@ class Rosapi(Node):
         response.type = proxy.get_service_type(request.service, self.globs.services)
         return response
 
-    def get_publishers(self, request, response):
-        """Called by the rosapi/Publishers service.  Given the name of a topic, returns a list of node names
-        that are publishing on that topic."""
-        response.publishers = proxy.get_publishers(request.topic, self.globs.topics)
-        return response
-
-    def get_subscribers(self, request, response):
-        """Called by the rosapi/Subscribers service.  Given the name of a topic, returns a list of node names
-        that are subscribing to that topic."""
-        response.subscribers = proxy.get_subscribers(request.topic, self.globs.topics)
-        return response
-
     def get_service_providers(self, request, response):
-        """Called by the rosapi/ServiceProviders service.  Given the name of a topic, returns a list of node names
+        """Called by the rosapi/ServiceProviders service.  Given the name of a service, returns a list of node names
         that are advertising that service type"""
         response.providers = proxy.get_service_providers(request.service, self.globs.services)
         return response
@@ -233,14 +235,6 @@ class Rosapi(Node):
         """Called by the rosapi/ServiceNode service.  Given the name of a service, returns the name of the node
         that is providing that service."""
         response.node = proxy.get_service_node(request.service, self.globs.services)
-        return response
-
-    def get_message_details(self, request, response):
-        """Called by the rosapi/MessageDetails service.  Given the name of a message type, returns the TypeDef
-        for that type."""
-        response.typedefs = [
-            dict_to_typedef(d) for d in objectutils.get_typedef_recursive(request.type)
-        ]
         return response
 
     def get_service_request_details(self, request, response):
@@ -260,6 +254,55 @@ class Rosapi(Node):
             for d in objectutils.get_service_response_typedef_recursive(request.type)
         ]
         return response
+    
+    def get_service_details(self, request, response):
+        """Called by the rosapi/ServiceDetails service. Given a service name, returns the details of he service. """
+        response.type = proxy.get_service_type(request.service, self.globs.services)
+        response.node = proxy.get_service_node(request.service, self.globs.services)
+        response.providers = proxy.get_service_providers(request.service, self.globs.services)
+        response.typedef_full_text = objectutils.get_typedef_full_text(response.type)
+        response.response_typedefs = [
+            dict_to_typedef(d)
+            for d in objectutils.get_service_response_typedef_recursive(response.type)
+        ]
+        response.request_typedefs = [
+            dict_to_typedef(d)
+            for d in objectutils.get_service_request_typedef_recursive(response.type)
+        ]
+        return response
+            
+    
+
+    # ACTIONS ---------------------------------------------------------
+
+    def get_action_servers(self, request, response):
+        """Called by the rosapi/GetActionServers service. Returns a list of action servers based on actions standard topics"""
+        topics = proxy.get_topics(self.globs.topics, include_hidden=True)
+        response.action_servers = proxy.filter_action_servers(topics)
+        return response
+
+    
+    # OTHER ---------------------------------------------------------
+
+    def get_message_details(self, request, response):
+        """Called by the rosapi/MessageDetails service.  Given the name of a message type, returns the TypeDef
+        for that type."""
+        response.typedefs = [
+            dict_to_typedef(d) for d in objectutils.get_typedef_recursive(request.type)
+        ]
+        return response
+
+    def get_ros_version(self, request, response):
+        response.version = 2
+        response.distro = str(os.environ["ROS_DISTRO"])
+        return response
+
+    def get_time(self, request, response):
+        response.time = Clock(clock_type=ClockType.ROS_TIME).now().to_msg()
+        return response
+    
+
+    # PARAM ---------------------------------------------------------
 
     def set_param(self, request, response):
         try:
@@ -294,10 +337,9 @@ class Rosapi(Node):
     def get_param_names(self, request, response):
         response.names = params.get_param_names(self.globs.params)
         return response
+    
 
-    def get_time(self, request, response):
-        response.time = Clock(clock_type=ClockType.ROS_TIME).now().to_msg()
-        return response
+
 
     def _get_node_and_param_name(self, param):
         return tuple(param.split(":"))
@@ -307,11 +349,7 @@ class Rosapi(Node):
             "Malformed parameter name: {}; expecting <node_name>:<param_name>".format(param_name)
         )
 
-    def get_ros_version(self, request, response):
-        response.version = 2
-        response.distro = str(os.environ["ROS_DISTRO"])
-        return response
-
+    
 
 def dict_to_typedef(typedefdict):
     typedef = TypeDef()

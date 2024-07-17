@@ -25,6 +25,7 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   srv/Services.srv
   srv/ServicesForType.srv
   srv/ServiceType.srv
+  srv/ServiceDetails.srv
   srv/SetParam.srv
   srv/Subscribers.srv
   srv/Topics.srv
