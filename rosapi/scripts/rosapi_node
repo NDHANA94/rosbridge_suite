@@ -179,7 +179,7 @@ class Rosapi(Node):
         response.subscribers = proxy.get_subscribers(request.topic, self.globs.topics)
         response.type = proxy.get_topic_type(request.topic, self.globs.topics)
         response.typedefs = [ dict_to_typedef(d) for d in objectutils.get_typedef_recursive(response.type)]
-        response.typedef_full_text = objectutils.get_typedef_full_text(response.type)
+        response.typedef_full_text = objectutils.get_msg_typedef_full_text(response.type)
         return response
 
     def get_topics_for_type(self, request, response):
@@ -192,7 +192,7 @@ class Rosapi(Node):
         raw types, similar to `gendeps --cat`."""
         response.topics, response.types = proxy.get_topics_and_types(self.globs.topics)
         response.typedefs_full_text = [
-            objectutils.get_typedef_full_text(type) for type in response.types
+            objectutils.get_msg_typedef_full_text(type) for type in response.types
         ]
         return response
     
@@ -260,7 +260,7 @@ class Rosapi(Node):
         response.type = proxy.get_service_type(request.service, self.globs.services)
         response.node = proxy.get_service_node(request.service, self.globs.services)
         response.providers = proxy.get_service_providers(request.service, self.globs.services)
-        response.typedef_full_text = objectutils.get_typedef_full_text(response.type)
+        response.typedef_full_text = objectutils.get_srv_typedef_full_text(response.type)
         response.response_typedefs = [
             dict_to_typedef(d)
             for d in objectutils.get_service_response_typedef_recursive(response.type)

@@ -35,8 +35,13 @@ import inspect
 import logging
 import re
 
-from rosapi.stringify_field_types import stringify_field_types
+from rosapi.stringify_field_types import stringify_field_msg_types, stringify_field_srv_types
 from rosbridge_library.internal import ros_loader
+
+
+import rclpy.logging
+
+logger = rclpy.logging.get_logger('objectutils')
 
 # Keep track of atomic types and special types
 atomics = [
@@ -72,6 +77,7 @@ def get_typedef(type):
          - string[] constvalues
     get_typedef will return a typedef dict for the specified message type"""
 
+
     # Check if the type string indicates a sequence (array) type
     if matches := re.findall("sequence<([^<]+)>", type):
         # Extract the inner type and continue processing
@@ -84,6 +90,11 @@ def get_typedef(type):
     if type in specials:
         # Specials get their type def mocked up
         return _get_special_typedef(type)
+    
+    if "," in type:
+        # Bounded types come as "<type>, n", where n is an integer. 
+        # We need to seaparate the type name from it
+        type = type.split(",")[0]
 
     # Fetch an instance and return its typedef
     try:
@@ -130,18 +141,24 @@ def get_service_response_typedef_recursive(servicetype):
     # Get an instance of the service response class and get its typedef
     instance = ros_loader.get_service_response_instance(servicetype)
     typedef = _get_typedef(instance)
-
     # Return the list of sub-typedefs
     return _get_subtypedefs_recursive(typedef, [])
 
 
-def get_typedef_full_text(ty):
+def get_msg_typedef_full_text(ty):
     """Returns the full text (similar to `gendeps --cat`) for the specified message type"""
     try:
-        return stringify_field_types(ty)
+        return stringify_field_msg_types(ty)
     except Exception as e:
         return f"# failed to get full definition text for {ty}: {str(e)}"
 
+def get_srv_typedef_full_text(ty):
+    """Returns the full text (similar to `gendeps --cat`) for the specified message type"""
+    try:
+        return stringify_field_srv_types(ty)
+    except Exception as e:
+        return f"# failed to get full definition text for {ty}: {str(e)}"
+    
 
 def _get_typedef(instance):
     """Gets a typedef dict for the specified instance"""
@@ -295,7 +312,6 @@ def _get_subtypedefs_recursive(typedef, typesseen):
     typedefs = [typedef]
     for fieldtype in typedef["fieldtypes"]:
         typedefs = typedefs + _get_typedefs_recursive(fieldtype, typesseen)
-
     return typedefs
 
 
