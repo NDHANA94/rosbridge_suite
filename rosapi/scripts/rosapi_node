@@ -41,6 +41,7 @@ from rclpy.node import Node
 from rosapi import glob_helper, objectutils, params, proxy
 from rosapi_msgs.msg import TypeDef
 from rosapi_msgs.srv import (
+    ActionDetails,
     DeleteParam,
     GetActionServers,
     GetParam,
@@ -70,7 +71,7 @@ from rosapi_msgs.srv import (
 )
 
 
-# logger = rclpy.logging.get_logger('rosapi | node')
+logger = rclpy.logging.get_logger('rosapi | node')
 
 class Rosapi(Node):
 
@@ -118,6 +119,7 @@ class Rosapi(Node):
 
         # --- actions ---
         self.create_service(GetActionServers, "/rosapi/action_servers", self.get_action_servers)
+        self.create_service(ActionDetails, "/rosapi/action_details", self.get_action_details)
 
         # --- params ---
         self.create_service(SetParam, "/rosapi/set_param", self.set_param)
@@ -261,7 +263,7 @@ class Rosapi(Node):
         return response
     
     def get_service_details(self, request, response):
-        """Called by the rosapi/ServiceDetails service. Given a service name, returns the details of he service. """
+        """Called by the rosapi/ServiceDetails service. Given a service name, returns the details of the service. """
         response.type = proxy.get_service_type(request.service, self.globs.services)
         response.node = proxy.get_service_node(request.service, self.globs.services)
         response.providers = proxy.get_service_providers(request.service, self.globs.services)
@@ -284,6 +286,27 @@ class Rosapi(Node):
         """Called by the rosapi/GetActionServers service. Returns a list of action servers based on actions standard topics"""
         topics = proxy.get_topics(self.globs.topics, include_hidden=True)
         response.action_servers = proxy.filter_action_servers(topics)
+
+        return response
+    
+
+    def get_action_details(self, request, response):
+        """Called by the rosapi/ActionDetails service. Given a action name, returns server nodes, action client nodes and type of that action"""
+        nodes = proxy.get_nodes()
+        action_servers_with_type = []
+        for node in nodes:
+            action_servers_with_type = proxy.get_node_action_servers_with_types(node)
+            for action_server in action_servers_with_type:
+                if action_server.split(":")[0] == request.action :
+                    response.type = action_server.split(":")[1]
+                    response.server_nodes.append(node)
+            
+            action_clients_with_type = proxy.get_node_action_clients_with_types(node)
+            for action_client in action_clients_with_type:
+                if action_client.split(":")[0] == request.action:
+                    response.type = action_client.split(":")[1]
+                    response.client_nodes.append(node)
+
         return response
 
     

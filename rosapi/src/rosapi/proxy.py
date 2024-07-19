@@ -48,8 +48,8 @@ from ros2topic.api import get_topic_names, get_topic_names_and_types
 from .glob_helper import any_match, filter_globs
 from collections import namedtuple
 
-# import rclpy.logging
-# logger = rclpy.logging.get_logger('rosapi | proxy')
+import rclpy.logging
+logger = rclpy.logging.get_logger('rosapi | proxy')
 
 
 
@@ -331,6 +331,33 @@ def get_service_node(queried_type, services_glob, include_hidden=False):
         return node_name[0]
     else:
         return ""
+    
+
+def get_action_info(action):
+    nodes = get_nodes()
+    action_server_nodes = []
+    action_client_nodes = []
+    action_type = None
+
+    action_servers_with_type = []
+    for node in nodes:
+        action_servers_with_type = get_node_action_servers_with_types(node)
+        for action_server in action_servers_with_type:
+            if action_server.split(":")[0] == action :
+                action_type = action_server.split(":")[1]
+                action_server_nodes.append(node)
+        
+        action_clients_with_type = get_node_action_clients_with_types(node)
+        for action_client in action_clients_with_type:
+            if action_client.split(":")[0] == action:
+                action_type = action_client.split(":")[1]
+                action_client_nodes.append(node)
+
+    logger.info(f"{action_server_nodes}")
+    logger.info(f"{action_client_nodes}")
+    logger.info(f"{action_type}")
+    # return action_server_nodes
+            
 
 
 def parse_node_name(node_name):
