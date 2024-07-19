@@ -48,9 +48,8 @@ from ros2topic.api import get_topic_names, get_topic_names_and_types
 from .glob_helper import any_match, filter_globs
 from collections import namedtuple
 
-import rclpy.logging
-
-logger = rclpy.logging.get_logger('objectutils')
+# import rclpy.logging
+# logger = rclpy.logging.get_logger('objectutils')
 
 
 
