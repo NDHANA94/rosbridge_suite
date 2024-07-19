@@ -49,7 +49,7 @@ from .glob_helper import any_match, filter_globs
 from collections import namedtuple
 
 # import rclpy.logging
-# logger = rclpy.logging.get_logger('objectutils')
+# logger = rclpy.logging.get_logger('rosapi | proxy')
 
 
 
@@ -150,6 +150,7 @@ def get_node_info(node_name, include_hidden=False):
         action_clients = get_node_action_clients_with_types(node_name)
 
         return subscribers, publishers, service_servers, service_clients, action_servers, action_clients
+    return None
 
 def get_node_publications_with_types(node_name):
     """Returns a list of topic name:type that are being published by the specified node"""

@@ -70,6 +70,8 @@ from rosapi_msgs.srv import (
 )
 
 
+# logger = rclpy.logging.get_logger('rosapi | node')
+
 class Rosapi(Node):
 
     NAME = "rosapi"
@@ -156,14 +158,17 @@ class Rosapi(Node):
 
     def get_node_details(self, request, response):
         """Called by the rosapi/Nodes service. Returns a node description"""
-        (
-            response.subscribers,
-            response.publishers,
-            response.service_servers,
-            response.service_clients,
-            response.action_servers,
-            response.action_clients
-        ) = proxy.get_node_info(request.node)
+        node_info = proxy.get_node_info(request.node)
+        if node_info != None:
+            (
+                response.subscribers,
+                response.publishers,
+                response.service_servers,
+                response.service_clients,
+                response.action_servers,
+                response.action_clients
+            ) = proxy.get_node_info(request.node)
+
         return response
 
     # TOPICS ---------------------------------------------------------
