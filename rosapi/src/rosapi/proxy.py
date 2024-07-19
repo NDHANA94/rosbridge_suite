@@ -33,6 +33,8 @@
 
 import os
 
+from rclpy.action import get_action_client_names_and_types_by_node, get_action_server_names_and_types_by_node
+
 from ros2node.api import (
     get_node_names,
     get_publisher_info,
@@ -46,8 +48,18 @@ from ros2service.api import get_service_names, get_service_names_and_types
 from ros2topic.api import get_topic_names, get_topic_names_and_types
 
 from .glob_helper import any_match, filter_globs
+from collections import namedtuple
+
+import rclpy.logging
+
+logger = rclpy.logging.get_logger('objectutils')
+
+
 
 _node = None
+
+TopicInfo = namedtuple('Topic', ('name', 'types'))
+NodeName = namedtuple('NodeName', ('name', 'namespace', 'full_name'))
 
 
 def init(node):
@@ -137,13 +149,8 @@ def get_node_info(node_name, include_hidden=False):
         publishers = get_node_publications_with_types(node_name)
         service_servers = get_node_service_servers_with_types(node_name)
         service_clients = get_node_service_clients_with_types(node_name)
-
-        if str(os.environ["ROS_DISTRO"]) in ['foxy', 'dashing', 'eloquent']:
-            action_servers = []
-            action_clients = []
-        else:
-            action_servers = get_node_action_servers_with_types(node_name)
-            action_clients = get_node_action_clients_with_types(node_name)
+        action_servers = get_node_action_servers_with_types(node_name)
+        action_clients = get_node_action_clients_with_types(node_name)
 
         return subscribers, publishers, service_servers, service_clients, action_servers, action_clients
 
@@ -171,14 +178,37 @@ def get_node_service_clients_with_types(node_name):
 
 def get_node_action_servers_with_types(node_name):
     """Returns a list of action servers name:type that are being hosted by the specified node"""
-    action_servers = get_action_server_info(node=_node, remote_node_name=node_name)
-    return [action.name + ":" + action.types[0] for action in action_servers]
+    remote_node = parse_node_name(node_name)
+    action_servers = get_action_server_names_and_types_by_node(
+        node=_node, 
+        remote_node_name=remote_node.name, 
+        remote_node_namespace=remote_node.namespace
+    )
+
+    action_servers_ = []
+    for action_server in action_servers:
+        action_servers_.append(f"{action_server[0]}:{action_server[1][0]}")
+    
+    #action_servers = get_action_server_info(node=_node, remote_node_name=remote_node.name)
+    return action_servers_ #[action.name + ":" + action.types[0] for action in action_servers]
 
 def get_node_action_clients_with_types(node_name):
     """Returns a list of action clients name:type that are used by the specified node"""
-    action_clients = get_action_client_info(node=_node, remote_node_name=node_name)
-    return [action.name + ":" + action.types[0] for action in action_clients]
+    remote_node = parse_node_name(node_name)
+    action_clients = get_action_client_names_and_types_by_node(
+        node=_node, 
+        remote_node_name=remote_node.name, 
+        remote_node_namespace=remote_node.namespace
+    )
+
+    action_clients_ = []
+    for action_client in action_clients:
+        action_clients_.append(f"{action_client[0]}:{action_client[1][0]}")
+
+    # action_clients = get_action_client_info(node=_node, remote_node_name=node_name)
+    return action_clients_ #[action.name + ":" + action.types[0] for action in action_clients]
 # ------------------------------------------------------------------------------------------
+
 
 def get_node_publications(node_name):
     """Returns a list of topic names that are being published by the specified node"""
@@ -303,3 +333,13 @@ def get_service_node(queried_type, services_glob, include_hidden=False):
         return node_name[0]
     else:
         return ""
+
+
+def parse_node_name(node_name):
+    full_node_name = node_name
+    if not full_node_name.startswith('/'):
+        full_node_name = '/' + full_node_name
+    namespace, node_basename = full_node_name.rsplit('/', 1)
+    if namespace == '':
+        namespace = '/'
+    return NodeName(node_basename, namespace, full_node_name)
