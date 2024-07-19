@@ -40,8 +40,6 @@ from ros2node.api import (
     get_publisher_info,
     get_service_server_info,
     get_service_client_info,
-    get_action_server_info,
-    get_action_client_info,
     get_subscriber_info,
 )
 from ros2service.api import get_service_names, get_service_names_and_types
