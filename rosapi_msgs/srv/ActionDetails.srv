@@ -1,5 +1,9 @@
 string action
 ---
-string type
 string[] server_nodes
 string[] client_nodes
+string type
+string typedef_full_text
+TypeDef[] goal_typedefs
+TypeDef[] result_typedefs
+TypeDef[] feedback_typedefs
