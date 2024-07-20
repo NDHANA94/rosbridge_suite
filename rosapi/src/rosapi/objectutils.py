@@ -35,7 +35,7 @@ import inspect
 import logging
 import re
 
-from rosapi.stringify_field_types import stringify_field_msg_types, stringify_field_srv_types
+from rosapi.stringify_field_types import stringify_field_msg_types, stringify_field_srv_types, stringify_field_action_types
 from rosbridge_library.internal import ros_loader
 
 
@@ -112,7 +112,6 @@ def get_service_request_typedef(servicetype):
     instance = ros_loader.get_service_request_instance(servicetype)
     return _get_typedef(instance)
 
-
 def get_service_response_typedef(servicetype):
     """Returns a typedef dict for the service response class for the specified service type"""
     # Get an instance of the service response class and return its typedef
@@ -135,7 +134,6 @@ def get_service_request_typedef_recursive(servicetype):
     # Return the list of sub-typedefs
     return _get_subtypedefs_recursive(typedef, [])
 
-
 def get_service_response_typedef_recursive(servicetype):
     """Returns a list of typedef dicts for this type and all contained type fields"""
     # Get an instance of the service response class and get its typedef
@@ -143,6 +141,33 @@ def get_service_response_typedef_recursive(servicetype):
     typedef = _get_typedef(instance)
     # Return the list of sub-typedefs
     return _get_subtypedefs_recursive(typedef, [])
+
+
+
+def get_action_goal_typedef_recursive(servicetype):
+    """Returns a list of typedef dicts for this type and all contained type fields"""
+    # Get an instance of the action goal class and get its typedef
+    instance = ros_loader.get_action_goal_instance(servicetype)
+    typedef = _get_typedef(instance)
+    # Return the list of sub-typedefs
+    return _get_subtypedefs_recursive(typedef, [])
+
+def get_action_result_typedef_recursive(servicetype):
+    """Returns a list of typedef dicts for this type and all contained type fields"""
+    # Get an instance of the action result class and get its typedef
+    instance = ros_loader.get_action_result_instance(servicetype)
+    typedef = _get_typedef(instance)
+    # Return the list of sub-typedefs
+    return _get_subtypedefs_recursive(typedef, [])
+
+def get_action_feedback_typedef_recursive(servicetype):
+    """Returns a list of typedef dicts for this type and all contained type fields"""
+    # Get an instance of the action feedback class and get its typedef
+    instance = ros_loader.get_action_feedback_instance(servicetype)
+    typedef = _get_typedef(instance)
+    # Return the list of sub-typedefs
+    return _get_subtypedefs_recursive(typedef, [])
+
 
 
 def get_msg_typedef_full_text(ty):
@@ -153,13 +178,19 @@ def get_msg_typedef_full_text(ty):
         return f"# failed to get full definition text for {ty}: {str(e)}"
 
 def get_srv_typedef_full_text(ty):
-    """Returns the full text (similar to `gendeps --cat`) for the specified message type"""
+    """Returns the full text (similar to `gendeps --cat`) for the specified service type"""
     try:
         return stringify_field_srv_types(ty)
     except Exception as e:
         return f"# failed to get full definition text for {ty}: {str(e)}"
     
-
+def get_action_typedef_full_text(ty):
+    """Returns the full text (similar to `gendeps --cat`) for the specified service type"""
+    try:
+        return stringify_field_action_types(ty)
+    except Exception as e:
+        return f"# failed to get full definition text for {ty}: {str(e)}"
+    
 def _get_typedef(instance):
     """Gets a typedef dict for the specified instance"""
     if _valid_instance(instance):

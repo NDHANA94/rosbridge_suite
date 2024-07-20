@@ -306,6 +306,27 @@ class Rosapi(Node):
                 if action_client.split(":")[0] == request.action:
                     response.type = action_client.split(":")[1]
                     response.client_nodes.append(node)
+        
+        try:
+            response.typedef_full_text = objectutils.get_action_typedef_full_text(response.type)
+
+            response.goal_typedefs = [
+                dict_to_typedef(d)
+                for d in objectutils.get_action_goal_typedef_recursive(response.type)
+            ]
+        
+            response.result_typedefs = [
+                dict_to_typedef(d)
+                for d in objectutils.get_action_result_typedef_recursive(response.type)
+            ]
+
+            response.feedback_typedefs = [
+                dict_to_typedef(d)
+                for d in objectutils.get_action_feedback_typedef_recursive(response.type)
+            ]
+
+        except:
+            pass
 
         return response
 
