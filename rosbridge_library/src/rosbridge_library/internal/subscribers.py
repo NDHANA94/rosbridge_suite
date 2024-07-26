@@ -43,6 +43,9 @@ from rosbridge_library.internal.topics import (
     TypeConflictException,
 )
 
+import rclpy
+logger = rclpy.logging.get_logger('subscribers.py')
+
 """ Manages and interfaces with ROS Subscriber objects.  A single subscriber
 is shared between multiple clients
 """
@@ -94,8 +97,14 @@ class MultiSubscriber:
         if msg_type is None:
             msg_type = topic_type
 
+        # get subName of the msg type
+        subName = [x for x in msg_type.split("/") if x][1]
+
         # Load the message class, propagating any exceptions from bad msg types
-        msg_class = ros_loader.get_message_class(msg_type)
+        if subName == "msg":
+            msg_class = ros_loader.get_message_class(msg_type) # Debug: Error from here 
+        elif subName == "action":
+            msg_class = ros_loader.get_action_class(msg_type)
 
         # Make sure the specified msg type and established msg type are same
         msg_type_string = msg_class_type_repr(msg_class)
@@ -176,6 +185,7 @@ class MultiSubscriber:
             # In any case, the first message is handled using new_sub_callback,
             # which adds the new callback to the subscriptions dictionary.
             self.new_subscriptions.update({client_id: callback})
+
             if self.new_subscriber is None:
                 self.new_subscriber = self.node_handle.create_subscription(
                     self.msg_class,
@@ -267,6 +277,7 @@ class SubscriberManager:
         msg_type  -- (optional) the type of the topic
 
         """
+
         with self._lock:
             if topic not in self._subscribers:
                 self._subscribers[topic] = MultiSubscriber(

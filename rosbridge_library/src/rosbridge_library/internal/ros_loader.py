@@ -42,6 +42,9 @@ package that the respective class is contained in.
 Methods typically return the requested class or instance, or None if not found
 """
 
+import rclpy
+logger = rclpy.logging.get_logger('ros_loader.py')
+
 # Variable containing the loaded classes
 _loaded_msgs = {}
 _loaded_srvs = {}
@@ -174,7 +177,7 @@ def _get_class(typestring: str, subname: str, cache: dict, lock: Lock) -> Any:
     cls = _get_from_cache(cache, lock, norm_typestring)
     if cls is not None:
         return cls
-
+    
     # Load the class
     cls = _load_class(modname, subname, classname)
 
@@ -201,7 +204,21 @@ def _load_class(modname: str, subname: str, classname: str) -> None:
         raise InvalidModuleException(modname, subname, exc)
 
     try:
-        return getattr(pypkg, classname)
+        if subname == "msg":
+            return getattr(pypkg, classname)
+        elif subname == "srv":
+            return getattr(pypkg, classname)
+        elif subname == "action":
+            classname_ = [x for x in classname.split("_") if x]
+            if len(classname_) > 1:
+                actionClassName = "_" + classname_[0].lower()
+                submodule = classname
+                pypkg = importlib.import_module(f"{modname}.{subname}.{actionClassName}")
+                return getattr(pypkg, submodule)
+            
+            else:
+                return getattr(pypkg, classname)
+        
     except Exception as exc:
         raise InvalidClassException(modname, subname, classname, exc)
 

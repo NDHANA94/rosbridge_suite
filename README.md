@@ -60,3 +60,32 @@ Releasing requires push access to [RobotWebTools/rosbridge_suite](https://github
     - `bloom-release --rosdistro rolling --track rolling rosbridge_suite`
 
 Once the PRs are merged, packages will be available for each distro after the next sync. Build/sync status can be viewed at: [foxy](http://repo.ros2.org/status_page/ros_foxy_default.html), [galactic](http://repo.ros2.org/status_page/ros_galactic_default.html), [rolling](http://repo.ros2.org/status_page/ros_rolling_default.html).
+
+
+
+<!-- 
+- developed version: Foxy
+
+- tested versions:
+
+    - Galactic  : NOT TESTED YET
+
+    - Humble    : TESTED - OK
+
+    - Iron      : NOT TESTED YET
+
+    - Jazzy     : NOT TESTED YET
+
+ -->
+
+ <!-- 
+ 
+ Modifictions:
+
+    * rosapi and rosapi_msgs:
+        * Modified NodeDetails.srv
+        * Added methods to get node service servers, service clients, action servers, and action clients
+        
+ 
+ 
+  -->

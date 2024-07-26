@@ -39,6 +39,9 @@ from rosbridge_library.internal.pngcompression import encode as encode_png
 from rosbridge_library.internal.subscribers import manager
 from rosbridge_library.internal.subscription_modifiers import MessageHandler
 
+import rclpy
+logger = rclpy.logging.get_logger('subscribe.py')
+
 try:
     from ujson import dumps as encode_json
 except ImportError:
