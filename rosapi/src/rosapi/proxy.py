@@ -130,6 +130,7 @@ def get_publications_and_types(glob, getter_function, **include_hidden_publicati
     ]
     return filtered_publications, filtered_publication_types
 
+# ------------------------------------------------------------------------------------------
 
 def get_nodes(include_hidden=False):
     """Returns a list of all the nodes registered in the ROS system"""
@@ -137,7 +138,6 @@ def get_nodes(include_hidden=False):
     full_names = [node_name.full_name for node_name in node_names]
     return full_names
 
-# ------------------------------------------------------------------------------------------
 def get_node_info(node_name, include_hidden=False):
     node_names = get_node_names(node=_node, include_hidden_nodes=include_hidden)
     if node_name in [n.full_name for n in node_names]:
